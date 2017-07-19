@@ -1,0 +1,13 @@
+C51 COMPILER V8.02   MBFRAME                                                               11/21/2016 18:44:43 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE MBFRAME
+OBJECT MODULE PLACED IN .\mbFrame.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\..\src\mbFrame.c LARGE ROM(COMPACT) BROWSE INCDIR(..\..\include;..\..\sr
+                    -c) DEFINE(MB_DEVICE_C51,MB_BIG_ENDIAN,MB_MODBUS_RTU) DEBUG OBJECTEXTEND PRINT(.\mbFrame.lst) OBJECT(.\mbFrame.obj)
+
+line level    source
+
+*** ERROR C318 OF ..\..\src\mbFrame.c: can't open file '..\..\src\mbFrame.c'
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

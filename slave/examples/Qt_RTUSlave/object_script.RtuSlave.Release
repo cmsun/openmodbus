@@ -1,0 +1,15 @@
+INPUT(
+./release/main.o
+./release/qtRTUSlave.o
+./release/mbchecksum.o
+./release/mbdata.o
+./release/mberror.o
+./release/mbformat.o
+./release/mbproc.o
+./release/mbbuff.o
+./release/mbrtu.o
+./release/mbascii.o
+./release/mbtcp.o
+./release/qprintf.o
+./release/moc_qtRTUSlave.o
+);

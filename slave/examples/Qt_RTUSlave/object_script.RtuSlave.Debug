@@ -1,0 +1,15 @@
+INPUT(
+./debug/main.o
+./debug/qtRTUSlave.o
+./debug/mbchecksum.o
+./debug/mbdata.o
+./debug/mberror.o
+./debug/mbformat.o
+./debug/mbproc.o
+./debug/mbbuff.o
+./debug/mbrtu.o
+./debug/mbascii.o
+./debug/mbtcp.o
+./debug/qprintf.o
+./debug/moc_qtRTUSlave.o
+);

@@ -1,0 +1,201 @@
+C51 COMPILER V8.02   MBSLAVE                                                               11/20/2016 12:53:17 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE MBSLAVE
+OBJECT MODULE PLACED IN .\mbSlave.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\..\src\mbSlave.c LARGE ROM(COMPACT) BROWSE INCDIR(..\..\include) DEFINE(
+                    -DEVICE_C51,BIG_ENDIAN,MODBUS_RTU) DEBUG OBJECTEXTEND PRINT(.\mbSlave.lst) OBJECT(.\mbSlave.obj)
+
+line level    source
+
+   1          #include <string.h>
+   2          #include "mbConfig.h"
+*** WARNING C317 IN LINE 26 OF ..\..\INCLUDE\MBCONFIG.H: attempt to redefine macro 'BIG_ENDIAN'
+   3          #include "mbData.h"
+   4          
+   5          void mbSlave_fun01(mbu8 *recData, mbu8 *retBuff)
+   6          {
+   7   1          mbu8 movBit, remainBit;
+   8   1          mbu16 i, modbusAddr, startAddr, endAddr, bitCount, byteCount;
+   9   1      
+  10   1          //modbus通信协议是大端字节序
+  11   1          //把modbus数据读到要地内存时，不管运行代码的设备是大端还是小端，用移位�
+             -��方法得到的数值大小是一样的
+  12   1          //所以其实只需要modbusAddr = recData[2]<<8 | recData[3]这个代码就可以在大小端下通�
+             -��
+  13   1          modbusAddr = recData[2]<<8 | recData[3];            //modbus起始地址
+  14   1          movBit = modbusAddr % 8;                            //bmCoil中要读取的位所在字节要右移的
+             -位数 
+  15   1          startAddr = modbusAddr / 8;                         //要读取的mbCoil起始地址
+  16   1          bitCount = recData[4]<<8 | recData[5];              //总共要读取的位数
+  17   1          endAddr = (modbusAddr+bitCount-1) / 8;              //读取的最后一位所在的mbCoil的地址
+  18   1          byteCount = bitCount%8 ? bitCount/8+1 : bitCount/8; //要返回的字节数
+  19   1          remainBit = 7-(modbusAddr+bitCount-1)%8;            //要读取的最后一个位所在字节剩下的
+             -位数
+  20   1      
+  21   1          for(i = 0; i < byteCount; ++i)
+  22   1          {
+  23   2              retBuff[3+i] = 0;
+  24   2              if((modbusAddr+i*8)/8 < endAddr) //如果当前读取的mbCoil所在的字节小于endAddr所在�
+             -�节 
+  25   2              {
+  26   3                  retBuff[3+i] |= mbCoil[startAddr+i] >> movBit;
+  27   3                  retBuff[3+i] |= mbCoil[startAddr+i+1] << (8-movBit);
+  28   3                  if(i == byteCount-1)
+  29   3                  {
+  30   4                      retBuff[3+i] <<= remainBit-(8-movBit);         //左移，把不读取的位清0
+  31   4                      retBuff[3+i] >>= remainBit-(8-movBit);         //右移回去
+  32   4                  }
+  33   3              }
+  34   2              else                                                //如果当前读取的mbCoil所在的字节�
+             -�于endAddr所在字节 
+  35   2              {
+  36   3                  retBuff[3+i] = mbCoil[startAddr+i] << remainBit;  //右移，把不读取的位清0
+  37   3                  retBuff[3+i] >>= movBit + remainBit;              //左移回去
+  38   3              }
+  39   2          }
+  40   1          
+  41   1          retBuff[0] = recData[0];
+  42   1          retBuff[1] = recData[1];
+  43   1          retBuff[2] = byteCount;
+  44   1      }
+  45          
+  46          void mbSlave_fun02(mbu8 *recData, mbu8 *retBuff)
+  47          {
+C51 COMPILER V8.02   MBSLAVE                                                               11/20/2016 12:53:17 PAGE 2   
+
+  48   1          mbu8 movBit, remainBit;
+  49   1          mbu16 i, modbusAddr, startAddr, endAddr, bitCount, byteCount;
+  50   1      
+  51   1          modbusAddr = recData[2]<<8 | recData[3];            //modbus起始地址
+  52   1          movBit = modbusAddr % 8;                            //bmCoil中要读取的位所在字节要左移的
+             -位数 
+  53   1          startAddr = modbusAddr / 8;                         //要读取的mbDigitIn起始地址
+  54   1          bitCount = recData[4]<<8 | recData[5];              //总共要读取的位数
+  55   1          endAddr = (modbusAddr+bitCount-1) / 8;              //读取的最后一位所在的mbCoil的地址
+  56   1          byteCount = bitCount%8 ? bitCount/8+1 : bitCount/8; //要返回的字节数
+  57   1          remainBit = 7-(modbusAddr+bitCount-1)%8;            //要读取的最后一个位所在字节剩下的
+             -位数
+  58   1      
+  59   1          for(i = 0; i < byteCount; ++i)
+  60   1          {
+  61   2              retBuff[3+i] = 0;
+  62   2              if((modbusAddr+i*8)/8 < endAddr) //如果当前读取的mbDigitIn所在的字节小于endAddr所�
+             -�字节 
+  63   2              {
+  64   3                  retBuff[3+i] |= mbDigitIn[startAddr+i] >> movBit;
+  65   3                  retBuff[3+i] |= mbDigitIn[startAddr+i+1] << (8-movBit);
+  66   3                  if(i == byteCount-1)
+  67   3                  {
+  68   4                      retBuff[3+i] <<= remainBit-(8-movBit);           //左移，把不读取的位清0
+  69   4                      retBuff[3+i] >>= remainBit-(8-movBit);           //右移回去
+  70   4                  }
+  71   3              }
+  72   2              else                                                    //如果当前读取的mbCoil所在的字�
+             -��等于endAddr所在字节 
+  73   2              {
+  74   3                  retBuff[3+i] = mbDigitIn[startAddr+i] << remainBit;   //右移，把不读取的位清0
+  75   3                  retBuff[3+i] >>= movBit + remainBit;                  //左移回去
+  76   3              }
+  77   2          }
+  78   1      
+  79   1          retBuff[0] = recData[0];
+  80   1          retBuff[1] = recData[1];
+  81   1          retBuff[2] = byteCount;
+  82   1      }
+  83          
+  84          void mbSlave_fun03(mbu8 *recData, mbu8 *retBuff)
+  85          {
+  86   1          mbu16 i, modbusAddr, registerCount;
+  87   1      
+  88   1          modbusAddr = recData[2]<<8 | recData[3];
+  89   1          registerCount = recData[4]<<8 | recData[5];
+  90   1      
+  91   1          for(i = 0; i < registerCount; ++i)
+  92   1          {
+  93   2      #ifdef BIG_ENDIAN
+  94   2              ((mbu16*)(retBuff+3))[i] = mbHoldReg[modbusAddr+i];
+  95   2      #else
+                      ((mbu16*)(retBuff+3))[i] = mbHoldReg[modbusAddr+i]>>8 | mbHoldReg[modbusAddr+i]<<8;
+              #endif
+  98   2          }
+  99   1      
+ 100   1          retBuff[0] = recData[0];
+ 101   1          retBuff[1] = recData[1];
+ 102   1          retBuff[2] = registerCount * 2;
+ 103   1      }
+ 104          
+ 105          void mbSlave_fun04(mbu8 *recData, mbu8 *retBuff)
+C51 COMPILER V8.02   MBSLAVE                                                               11/20/2016 12:53:17 PAGE 3   
+
+ 106          {
+ 107   1          mbu16 i, modbusAddr, registerCount;
+ 108   1          
+ 109   1          modbusAddr = recData[2]<<8 | recData[3];
+ 110   1          registerCount = recData[4]<<8 | recData[5];
+ 111   1      
+ 112   1          for(i = 0; i < registerCount; ++i)
+ 113   1          {
+ 114   2      #ifdef BIG_ENDIAN
+ 115   2              ((mbu16*)(retBuff+3))[i] = mbAnalogIn[modbusAddr+i];
+ 116   2      #else
+                      ((mbu16*)(retBuff+3))[i] = mbAnalogIn[modbusAddr+i]>>8 | mbAnalogIn[modbusAddr+i]<<8;
+              #endif
+ 119   2          }
+ 120   1      
+ 121   1          retBuff[0] = recData[0];
+ 122   1          retBuff[1] = recData[1];
+ 123   1          retBuff[2] = registerCount * 2;
+ 124   1      }
+ 125          
+ 126          void mbSlave_fun05(mbu8 *recData, mbu8 *retBuff)
+ 127          {
+ 128   1          mbu8 movBit;
+ 129   1          mbu16 modbusAddr, dataAddr;
+ 130   1      
+ 131   1          modbusAddr = recData[2]<<8 | recData[3];
+ 132   1          movBit = modbusAddr%8;
+ 133   1          dataAddr = modbusAddr/8;
+ 134   1          recData[4] ? (mbCoil[dataAddr] |= 1<<movBit) : (mbCoil[dataAddr] &= ~(1<<movBit));
+ 135   1          memcpy(retBuff, recData, 8);
+ 136   1      }
+ 137          
+ 138          void mbSlave_fun06(mbu8 *recData, mbu8 *retBuff)
+ 139          {
+ 140   1          mbu16 modbusAddr;
+ 141   1      
+ 142   1          modbusAddr = recData[2]<<8 | recData[3];
+ 143   1          mbHoldReg[modbusAddr] = recData[4]<<8 | recData[5];
+ 144   1          memcpy(retBuff, recData, 8);
+ 145   1      }
+ 146          
+ 147          void mbSlave_fun10(mbu8 *recData, mbu8 *retBuff)
+ 148          {
+ 149   1          mbu16 i, modbusAddr, registerCount;
+ 150   1      
+ 151   1          modbusAddr = recData[2]<<8 | recData[3];
+ 152   1          registerCount = recData[4]<<8 | recData[5];
+ 153   1      
+ 154   1          for(i = 0; i < registerCount; ++i)
+ 155   1          {
+ 156   2              mbHoldReg[modbusAddr+i] = recData[7+i*2]<<8 | recData[8+i*2];
+ 157   2          }
+ 158   1          memcpy(retBuff, recData, 6);
+ 159   1      }
+ 160          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2507    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      87
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V8.02   MBSLAVE                                                               11/20/2016 12:53:17 PAGE 4   
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

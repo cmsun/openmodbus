@@ -1,0 +1,349 @@
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 1   
+
+
+C51 COMPILER V8.02, COMPILATION OF MODULE MBRTUSLAVE
+OBJECT MODULE PLACED IN .\mbRTUSlave.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE ..\..\src\mbRTUSlave.c LARGE ROM(COMPACT) BROWSE INCDIR(..\..\include) DEFI
+                    -NE(DEVICE_C51,BIG_ENDIAN,MODBUS_RTU) DEBUG OBJECTEXTEND PRINT(.\mbRTUSlave.lst) OBJECT(.\mbRTUSlave.obj)
+
+line level    source
+
+   1          #include "mbConfig.h"
+*** WARNING C317 IN LINE 26 OF ..\..\INCLUDE\MBCONFIG.H: attempt to redefine macro 'BIG_ENDIAN'
+   2          #include "mbChecksum.h"
+   3          #include "mbError.h"
+   4          #include "mbSlave.h"
+   5          #include "mbRTUSlave.h"
+   6          
+   7          extern void mbRawSend(mbu8 *retBuff, size_t retlen);
+   8          
+   9          void mbRtuSlave_fun01(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+  10          {
+  11   1          size_t retLen;
+  12   1          mbu16 crc, addr, count;
+  13   1      
+  14   1          //检查报文是否是8个字节
+  15   1          if(recLen != 8)
+  16   1          {
+  17   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+  18   2              return;
+  19   2          }
+  20   1      
+  21   1          //检查校验码
+  22   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+  23   1          if(mbCalCRC(recData, recLen-2) != crc)
+  24   1          {
+  25   2              mbRtuError(recData, retBuff, 0x08);
+  26   2              return;
+  27   2          }
+  28   1      
+  29   1          //检查modbus地址是否超出范围
+  30   1          addr = recData[2]<<8 | recData[3];
+  31   1          count = recData[4]<<8 | recData[5];
+  32   1          if(addr >= COIL_COUNT || (addr+count) > COIL_COUNT)
+  33   1          {
+  34   2              mbRtuError(recData, retBuff, 0x02);
+  35   2              return;
+  36   2          }
+  37   1          
+  38   1          //检查是否有足够的回复空间
+  39   1          retLen = (count%8 ? count/8+1 : count/8) + 5;
+  40   1          if(retLen > RETURN_BUFFER_LENGTH)
+  41   1          {
+  42   2              mbRtuError(recData, retBuff, 0x04); //错误码0x04表示从站设备故障
+  43   2              return;
+  44   2          }
+  45   1      
+  46   1          //如果接收的数据报文格式无误，则进行数据处理
+  47   1          mbSlave_fun01(recData, retBuff);
+  48   1          crc = mbCalCRC(retBuff, retLen-2);
+  49   1      #ifdef BIG_ENDIAN
+  50   1          *(mbu16*)(retBuff+retLen-2) = crc;
+  51   1      #else
+                  *(mbu16*)(retBuff+retLen-2) = crc>>8 | crc<<8;
+              #endif
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 2   
+
+  54   1          if(recData[0] != 0) mbRawSend(retBuff, retLen);
+  55   1      }
+  56          
+  57          void mbRtuSlave_fun02(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+  58          {
+  59   1          size_t retLen;
+  60   1          mbu16 crc, addr, count;
+  61   1      
+  62   1          //检查报文是否是8个字节
+  63   1          if(recLen != 8)
+  64   1          {
+  65   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+  66   2              return;
+  67   2          }
+  68   1      
+  69   1          //检查校验码
+  70   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+  71   1          if(mbCalCRC(recData, recLen-2) != crc)
+  72   1          {
+  73   2              mbRtuError(recData, retBuff, 0x08);
+  74   2              return;
+  75   2          }
+  76   1      
+  77   1          //检查modbus地址是否超出范围
+  78   1          addr = recData[2]<<8 | recData[3];
+  79   1          count = recData[4]<<8 | recData[5];
+  80   1          if(addr >= DIGITAL_COUNT || (addr+count) > DIGITAL_COUNT)
+  81   1          {
+  82   2              mbRtuError(recData, retBuff, 0x02);
+  83   2              return;
+  84   2          }
+  85   1      
+  86   1          //检查是否有足够的回复空间
+  87   1          retLen = (count%8 ? count/8+1 : count/8) + 5;
+  88   1          if(retLen > RETURN_BUFFER_LENGTH)
+  89   1          {
+  90   2              mbRtuError(recData, retBuff, 0x04); //错误码0x04表示从站设备故障
+  91   2              return;
+  92   2          }
+  93   1      
+  94   1          //如果接收的数据报文格式无误，则进行数据处理
+  95   1          mbSlave_fun02(recData, retBuff);
+  96   1          crc = mbCalCRC(retBuff, retLen-2);
+  97   1      #ifdef BIG_ENDIAN
+  98   1          *(mbu16*)(retBuff+retLen-2) = crc;
+  99   1      #else
+                  *(mbu16*)(retBuff+retLen-2) = crc>>8 | crc<<8;
+              #endif
+ 102   1          if(recData[0] != 0) mbRawSend(retBuff, retLen);
+ 103   1      }
+ 104          
+ 105          void mbRtuSlave_fun03(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+ 106          {
+ 107   1          size_t retLen;
+ 108   1          mbu16 crc, addr, count;
+ 109   1      
+ 110   1          //检查报文是否是8个字节
+ 111   1          if(recLen != 8)
+ 112   1          {
+ 113   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+ 114   2              return;
+ 115   2          }
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 3   
+
+ 116   1      
+ 117   1          //检查校验码
+ 118   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+ 119   1          if(mbCalCRC(recData, recLen-2) != crc)
+ 120   1          {
+ 121   2              mbRtuError(recData, retBuff, 0x08);
+ 122   2              return;
+ 123   2          }
+ 124   1      
+ 125   1          //检查modbus地址是否超出范围
+ 126   1          addr = recData[2]<<8 | recData[3];
+ 127   1          count = recData[4]<<8 | recData[5];
+ 128   1          if(addr >= REGISTER_COUNT || (addr+count) > REGISTER_COUNT)
+ 129   1          {
+ 130   2              mbRtuError(recData, retBuff, 0x02);
+ 131   2              return;
+ 132   2          }
+ 133   1          
+ 134   1          //检查是否有足够的回复空间
+ 135   1          retLen = count*2 + 5;
+ 136   1          if(retLen > RETURN_BUFFER_LENGTH)
+ 137   1          {
+ 138   2              mbRtuError(recData, retBuff, 0x04); //错误码0x04表示从站设备故障
+ 139   2              return;
+ 140   2          }
+ 141   1      
+ 142   1          //如果接收的数据报文格式无误，则进行数据处理
+ 143   1          mbSlave_fun03(recData, retBuff);
+ 144   1          crc = mbCalCRC(retBuff, retLen-2);
+ 145   1      #ifdef BIG_ENDIAN
+ 146   1          *(mbu16*)(retBuff+retLen-2) = crc;
+ 147   1      #else
+                  *(mbu16*)(retBuff+retLen-2) = crc>>8 | crc<<8;
+              #endif
+ 150   1          if(recData[0] != 0) mbRawSend(retBuff, retLen);
+ 151   1      }
+ 152          
+ 153          void mbRtuSlave_fun04(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+ 154          {
+ 155   1          size_t retLen;
+ 156   1          mbu16 crc, addr, count;
+ 157   1      
+ 158   1          //检查报文是否是8个字节
+ 159   1          if(recLen != 8)
+ 160   1          {
+ 161   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+ 162   2              return;
+ 163   2          }
+ 164   1      
+ 165   1          //检查校验码
+ 166   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+ 167   1          if(mbCalCRC(recData, recLen-2) != crc)
+ 168   1          {
+ 169   2              mbRtuError(recData, retBuff, 0x08);
+ 170   2              return;
+ 171   2          }
+ 172   1      
+ 173   1          //检查modbus地址是否超出范围
+ 174   1          addr = recData[2]<<8 | recData[3];
+ 175   1          count = recData[4]<<8 | recData[5];
+ 176   1          if(addr >= ANALOGIN_COUNT*4 || (addr+count) > ANALOGIN_COUNT*4)
+ 177   1          {
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 4   
+
+ 178   2              mbRtuError(recData, retBuff, 0x02);
+ 179   2              return;
+ 180   2          }
+ 181   1          
+ 182   1          //检查是否有足够的回复空间
+ 183   1          retLen = count*2 + 5;
+ 184   1          if(retLen > RETURN_BUFFER_LENGTH)
+ 185   1          {
+ 186   2              mbRtuError(recData, retBuff, 0x04); //错误码0x04表示从站设备故障
+ 187   2              return;
+ 188   2          }
+ 189   1      
+ 190   1          //如果接收的数据报文格式无误，则进行数据处理
+ 191   1          mbSlave_fun04(recData, retBuff);
+ 192   1          crc = mbCalCRC(retBuff, retLen-2);
+ 193   1      #ifdef BIG_ENDIAN
+ 194   1          *(mbu16*)(retBuff+retLen-2) = crc;
+ 195   1      #else
+                  *(mbu16*)(retBuff+retLen-2) = crc>>8 | crc<<8;
+              #endif
+ 198   1          if(recData[0] != 0) mbRawSend(retBuff, retLen);
+ 199   1      }
+ 200          
+ 201          void mbRtuSlave_fun05(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+ 202          {
+ 203   1          mbu16 crc, addr;
+ 204   1      
+ 205   1          //检查报文是否是8个字节
+ 206   1          if(recLen != 8)
+ 207   1          {
+ 208   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+ 209   2              return;
+ 210   2          }
+ 211   1      
+ 212   1          //检查校验码
+ 213   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+ 214   1          if(mbCalCRC(recData, recLen-2) != crc)
+ 215   1          {
+ 216   2              mbRtuError(recData, retBuff, 0x08);
+ 217   2              return;
+ 218   2          }
+ 219   1      
+ 220   1          //检查modbus地址是否超出范围
+ 221   1          addr = recData[2]<<8 | recData[3];
+ 222   1          if(addr >= COIL_COUNT)
+ 223   1          {
+ 224   2              mbRtuError(recData, retBuff, 0x02);
+ 225   2              return;
+ 226   2          }
+ 227   1          
+ 228   1          //如果接收的数据报文格式无误，则进行数据处理
+ 229   1          mbSlave_fun05(recData, retBuff);
+ 230   1          crc = mbCalCRC(retBuff, 6);
+ 231   1      #ifdef BIG_ENDIAN
+ 232   1          *(mbu16*)(retBuff+6) = crc;
+ 233   1      #else
+                  *(mbu16*)(retBuff+6) = crc>>8 | crc<<8;
+              #endif
+ 236   1          if(recData[0] != 0) mbRawSend(retBuff, 8);   
+ 237   1      }
+ 238          
+ 239          void mbRtuSlave_fun06(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 5   
+
+ 240          {
+ 241   1          mbu16 crc, addr;
+ 242   1      
+ 243   1          //检查报文是否是8个字节
+ 244   1          if(recLen != 8)
+ 245   1          {
+ 246   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+ 247   2              return;
+ 248   2          }
+ 249   1      
+ 250   1          //检查校验码
+ 251   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+ 252   1          if(mbCalCRC(recData, recLen-2) != crc)
+ 253   1          {
+ 254   2              mbRtuError(recData, retBuff, 0x08);
+ 255   2              return;
+ 256   2          }
+ 257   1      
+ 258   1          //检查modbus地址是否超出范围
+ 259   1          addr = recData[2]<<8 | recData[3];
+ 260   1          if(addr >= REGISTER_COUNT)
+ 261   1          {
+ 262   2              mbRtuError(recData, retBuff, 0x02);
+ 263   2              return;
+ 264   2          }
+ 265   1          
+ 266   1          //如果接收的数据报文格式无误，则进行数据处理
+ 267   1          mbSlave_fun06(recData, retBuff);
+ 268   1          crc = mbCalCRC(retBuff, 6);
+ 269   1      #ifdef BIG_ENDIAN
+ 270   1          *(mbu16*)(retBuff+6) = crc;
+ 271   1      #else
+                  *(mbu16*)(retBuff+6) = crc>>8 | crc<<8;
+              #endif
+ 274   1          if(recData[0] != 0) mbRawSend(retBuff, 8);
+ 275   1      }
+ 276          
+ 277          void mbRtuSlave_fun10(mbu8 *recData, size_t recLen, mbu8 *retBuff)
+ 278          {
+ 279   1          mbu16 crc, addr, count;
+ 280   1          
+ 281   1          //检查校验码
+ 282   1          crc = recData[recLen-2]<<8 | recData[recLen-1];
+ 283   1          if(mbCalCRC(recData, recLen-2) != crc)
+ 284   1          {
+ 285   2              mbRtuError(recData, retBuff, 0x08);
+ 286   2              return;
+ 287   2          }
+ 288   1      
+ 289   1          //检查modbus地址是否超出范围
+ 290   1          addr = recData[2]<<8 | recData[3];
+ 291   1          count = recData[4]<<8 | recData[5];
+ 292   1          if(addr >= REGISTER_COUNT || (addr+count) > REGISTER_COUNT)
+ 293   1          {
+ 294   2              mbRtuError(recData, retBuff, 0x02);
+ 295   2              return;
+ 296   2          }
+ 297   1      
+ 298   1          //检查报文格式
+ 299   1          if(count*2 != recData[6] || recLen != recData[6]+9U)
+ 300   1          {
+ 301   2              mbRtuError(recData, retBuff, 0x03); //错误的modbus报文格式
+C51 COMPILER V8.02   MBRTUSLAVE                                                            11/20/2016 12:53:18 PAGE 6   
+
+ 302   2              return;
+ 303   2          }   
+ 304   1      
+ 305   1          //如果接收的数据报文格式无误，则进行数据处理
+ 306   1          mbSlave_fun10(recData, retBuff);
+ 307   1          crc = mbCalCRC(retBuff, 6);
+ 308   1      #ifdef BIG_ENDIAN
+ 309   1          *(mbu16*)(retBuff+6) = crc;
+ 310   1      #else
+                  *(mbu16*)(retBuff+6) = crc>>8 | crc<<8;
+              #endif
+ 313   1          if(recData[0] != 0) mbRawSend(retBuff, 8);
+ 314   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3201    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      98
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
